@@ -1,0 +1,16 @@
+name: cycles
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - cmake
+  - make
+  - gxx
+  - clang
+  - doxygen
+  - spdlog
+  - pip 
+  - pip:
+    - breathe
+    - sphinx
