@@ -10,7 +10,7 @@ dependencies:
   - clang
   - doxygen
   - spdlog
-  - sfml
+  - sfml==2.6.0
   - pip 
   - pip:
     - breathe
