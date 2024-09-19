@@ -9,10 +9,10 @@ Install the dependencies:
 ```bash
 conda env create -f environment.yml
 ```
-This will create a conda environment called `cppdev` which you can activate with:
+This will create a conda environment called `cycles` which you can activate with:
 
 ```bash
-conda activate cppdev
+conda activate cycles
 ```
 
 ### Building the project
