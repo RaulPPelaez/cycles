@@ -50,3 +50,10 @@ jobs:
         cmake -DCMAKE_VERBOSE_MAKEFILE=yes -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX ..
         make -j6 all
                 
+    - name: Run tests
+      run: |
+        micromamba activate cycles
+        # Fix sfml bug
+        cd build
+        ctest --output-on-failure 
+                
