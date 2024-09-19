@@ -42,7 +42,7 @@ public:
 
   int getFrame() { return frame; }
 
-  bool isGameOver() { return gameStarted && players.size() == 1; }
+  bool isGameOver() { return gameStarted && players.size() <= 1; }
 
 private:
 

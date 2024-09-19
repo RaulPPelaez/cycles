@@ -11,10 +11,13 @@ FetchContent_MakeAvailable(googletest)
 include(GoogleTest)
 
 
-add_executable(test_doubly_linked_list  test_doubly_linked_list.cpp)
-target_include_directories(test_doubly_linked_list PRIVATE ${CMAKE_SOURCE_DIR}/src)
+add_executable(test_game_logic  test_game_logic.cpp)
+target_include_directories(test_game_logic PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(
-  test_doubly_linked_list
+  test_game_logic
   GTest::gtest_main
+  game_logic
+  configuration
 )
-gtest_discover_tests(test_doubly_linked_list)
+gtest_discover_tests(test_game_logic)
+#add_test(NAME test_game_logic COMMAND test_game_logic)
