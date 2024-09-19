@@ -1,5 +1,7 @@
 ## Cycles++: A C++ multiplayer game 
 
+**You can find the online documentation [here](https://cyclespp.readthedocs.io).**
+
 This is a C++ project with documentation using Doxygen+Sphinx+breathe. The project is built using CMake.
 
 ### Prerequisites
