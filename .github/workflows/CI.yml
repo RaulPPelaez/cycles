@@ -44,6 +44,8 @@ jobs:
     - name: Configure and compile the library
       run: |
         micromamba activate cycles
+        # Fix sfml bug
+        ln -s $CONDA_PREFIX/lib/libudev.so.1 $CONDA_PREFIX/lib/libudev.so.0
         mkdir build && cd build
         cmake -DCMAKE_VERBOSE_MAKEFILE=yes -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX ..
         make -j6 all
