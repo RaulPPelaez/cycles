@@ -11,6 +11,7 @@ build:
      python: "mambaforge-22.9"
   jobs:
      post_create_environment:
+       - ln -s $(which pip | rev | cut -d/ -f3- | rev)/lib/libudev.so.1 $(which pip | rev | cut -d/ -f3- | rev)/lib/libudev.so.0
        - cmake -DCMAKE_INSTALL_PREFIX=$(which pip | rev | cut -d/ -f3- | rev) . && make -j4 all
 
 conda:
