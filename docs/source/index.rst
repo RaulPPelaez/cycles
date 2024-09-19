@@ -1,19 +1,109 @@
-MyVeryCoolProject documentation
+Cycles documentation
 ===================================
 
-Welcome to the landing page!
+Cycles is a multiplayer implementation of the Light Cycles game from Tron. In this implementation bots play against other bots.
 
-A section
-----------
+The game is played on a grid, where each player controls a cycle that leaves a trail behind it. The goal is to make the other players crash into the walls or the trails left by the other cycles.
+
+The bots communicate with the server with a simple protocol over TCP. The server sends the game state to the bots and the bots respond with their actions.
+
+.. image:: screenshot.png
+   :align: center
+   :width: 50%
+
+The networking code as well as graphics are based on the `SFML <https://www.sfml-dev.org/>`_ library.
 
 
-.. doxygennamespace:: linked_list
+Installation
+------------
+The server and clients are written in C++ and require a C++20 compiler. All dependencies can be installed using the provided conda environment:
 
+.. code-block:: bash
 
-Docs
-====
+    conda env create -f environment.yml
+    conda activate cycles
+
+To build the server and the example client, clone the repository and run the following commands from the root directory of the repository:
+
+.. code-block:: bash
+
+    mkdir build
+    cd build
+    cmake ..
+    cmake --build .
+
+The server and the example client will be built in the `build/bin` directory.
+
+Usage
+-----
+Both the server and the clients expect the environment variable `CYCLES_PORT` to be set to the port where the server will run.
+
+To start the server, run the following command:
+
+.. code-block:: bash
+
+    ./build/bin/cycles_server <config_file>
+
+config_file is the path to a yaml file containing some server options. The following is an example of a config file:
+
+.. code-block:: yaml
+
+		gameHeight: 1000
+		gameWidth: 1000
+		gameBannerHeight: 100
+		gridHeight: 100
+		gridWidth: 100
+		maxClients: 60
+
+To start a client using the example bot, run the following command:
+
+.. code-block:: bash
+
+    ./build/bin/client <name> 
+
+name is the name of the bot. The bot will receive the game state from the server and will respond with its actions.
+The example client will move the cycle in a random-ish direction.
+
+You might want to :ref:`write your own bot <writing_a_bot>`.
+
+Example launch script
+*********************
+
+The following script will start the server and some clients:
+
+.. code-block:: bash
+		
+		export CYCLES_PORT=50017
+
+		cat<<EOF> config.yaml
+		gameHeight: 1000
+		gameWidth: 1000
+		gameBannerHeight: 100
+		gridHeight: 100
+		gridWidth: 100
+		maxClients: 60
+		EOF
+
+		./build/bin/server &
+		sleep 1
+
+		for i in {1..60}
+		do
+		./build/bin/client randomio$i &
+		done
+
+		     
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+   :hidden:
 
+   writing-a-bot
+
+
+Indices and tables
+==================
+
+   * :ref:`genindex`
+   * :ref:`search`

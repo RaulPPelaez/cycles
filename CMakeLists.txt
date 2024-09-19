@@ -19,4 +19,4 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 add_subdirectory(src)
 #enable_testing() # This line allows to call ctest after compilation
 #add_subdirectory(tests)
-#add_subdirectory(docs)
+add_subdirectory(docs)
