@@ -428,12 +428,9 @@ private:
   }
 };
 
-// Rendering Logic
-class GameRenderer {
-private:
-  sf::RenderWindow window;
-  sf::Font font;
-  bool loadFont() {
+namespace detail{
+    sf::Font loadFont() {
+      sf::Font font;
     const std::vector<std::string> fontPaths = {
         "/usr/share/fonts/liberation/LiberationSans-Regular.ttf",
         "/usr/share/fonts/liberation-sans/LiberationSans-Regular.ttf",
@@ -445,16 +442,111 @@ private:
     for (const auto &path : fontPaths) {
       if (font.loadFromFile(path)) {
         spdlog::info("Font loaded from {}", path);
-        return true;
+	return font;
       }
     }
 
     spdlog::error("Failed to load font");
-    return false;
+    throw std::runtime_error("Failed to load font");
   }
+  std::string bloomShader = R"(
+uniform sampler2D texture;
+uniform float blur_radius = 1.0;
+
+
+void main() {
+    vec2 textureCoordinates = gl_TexCoord[0].xy;
+    vec4 color = vec4(0.0);
+    color += texture2D(texture, textureCoordinates - 10.0 * blur_radius) * 0.0012;
+    color += texture2D(texture, textureCoordinates - 9.0 * blur_radius) * 0.0015;
+    color += texture2D(texture, textureCoordinates - 8.0 * blur_radius) * 0.0038;
+    color += texture2D(texture, textureCoordinates - 7.0 * blur_radius) * 0.0087;
+    color += texture2D(texture, textureCoordinates - 6.0 * blur_radius) * 0.0180;
+    color += texture2D(texture, textureCoordinates - 5.0 * blur_radius) * 0.0332;
+    color += texture2D(texture, textureCoordinates - 4.0 * blur_radius) * 0.0547;
+    color += texture2D(texture, textureCoordinates - 3.0 * blur_radius) * 0.0807;
+    color += texture2D(texture, textureCoordinates - 2.0 * blur_radius) * 0.1065;
+    color += texture2D(texture, textureCoordinates - blur_radius) * 0.1258;
+    color += texture2D(texture, textureCoordinates) * 0.1330;
+    color += texture2D(texture, textureCoordinates + blur_radius) * 0.1258;
+    color += texture2D(texture, textureCoordinates + 2.0 * blur_radius) * 0.1065;
+    color += texture2D(texture, textureCoordinates + 3.0 * blur_radius) * 0.0807;
+    color += texture2D(texture, textureCoordinates + 4.0 * blur_radius) * 0.0547;
+    color += texture2D(texture, textureCoordinates + 5.0 * blur_radius) * 0.0332;
+    color += texture2D(texture, textureCoordinates + 6.0 * blur_radius) * 0.0180;
+    color += texture2D(texture, textureCoordinates - 7.0 * blur_radius) * 0.0087;
+    color += texture2D(texture, textureCoordinates - 8.0 * blur_radius) * 0.0038;
+    color += texture2D(texture, textureCoordinates - 9.0 * blur_radius) * 0.0015;
+    color += texture2D(texture, textureCoordinates - 10.0 * blur_radius) * 0.0012;
+    gl_FragColor = color*0;
+}
+
+)";
+}
+
+// Rendering Logic
+class GameRenderer {
+private:
+  sf::RenderWindow window;
+  sf::Font font;
+  sf::Shader postProcessShader;
+  sf::RenderTexture renderTexture;
+
+public:
+  GameRenderer()
+      : window(sf::VideoMode(GAME_WIDTH, GAME_HEIGHT + GAME_BANNER_HEIGHT),
+               "Game Server") {
+    window.setFramerateLimit(60);
+    try {
+      font = detail::loadFont();
+    } catch (const std::runtime_error &e) {
+      spdlog::warn("No font loaded. Text rendering may not work correctly.");
+    }
+    postProcessShader.loadFromMemory(detail::bloomShader, sf::Shader::Fragment);
+    renderTexture.create(window.getSize().x, window.getSize().y);
+  }
+
+  void render(std::shared_ptr<Game> game) {
+    window.clear(sf::Color::White);
+    // // Draw grid
+    // sf::RectangleShape cell(sf::Vector2f(CELL_SIZE - 1, CELL_SIZE - 1));
+    // cell.setFillColor(sf::Color::Black);
+    // for (int y = 0; y < GRID_HEIGHT; ++y) {
+    //   for (int x = 0; x < GRID_WIDTH; ++x) {
+    // 	cell.setPosition(x * CELL_SIZE, y * CELL_SIZE);
+    // 	window.draw(cell);
+    //   }
+    // }
+    renderPlayers(game);
+    if (game->isGameOver()) {
+      renderGameOver(game);
+    }
+    renderBanner(game);
+    window.display();
+  }
+
+  bool isOpen() const { return window.isOpen(); }
+
+  void handleEvents() {
+    sf::Event event;
+    while (window.pollEvent(event)) {
+      if (event.type == sf::Event::Closed) {
+        window.close();
+      }
+      if (event.type == sf::Event::KeyPressed &&
+          event.key.code == sf::Keyboard::Escape) {
+        window.close();
+      }
+    }
+  }
+
+private:
 
   void renderPlayers(std::shared_ptr<Game> game) {
     const int offset = GAME_BANNER_HEIGHT;
+
+    postProcessShader.setUniform("blur_radius", 10.0f);
+    renderTexture.clear(sf::Color::White);
     for (const auto &[id, player] : game->getPlayers()) {
       sf::CircleShape playerShape(CELL_SIZE);
       // Make the head of the player darker
@@ -466,20 +558,26 @@ private:
       playerShape.setPosition((player.position.x) * CELL_SIZE - CELL_SIZE / 2,
                               (player.position.y) * CELL_SIZE - CELL_SIZE / 2 +
                                   offset);
-      window.draw(playerShape);
+      renderTexture.draw(playerShape);
       // Draw tail
       for (auto tail : player.tail) {
         sf::RectangleShape tailShape(sf::Vector2f(CELL_SIZE, CELL_SIZE));
         tailShape.setFillColor(player.color);
         tailShape.setPosition(tail.x * CELL_SIZE, tail.y * CELL_SIZE + offset);
-        window.draw(tailShape);
+        renderTexture.draw(tailShape);
       }
+
       sf::Text nameText(player.name, font, 22);
       nameText.setFillColor(sf::Color::Black);
       nameText.setPosition(player.position.x * CELL_SIZE,
                            player.position.y * CELL_SIZE - 20 + offset);
       window.draw(nameText);
     }
+    renderTexture.display();
+    sf::Sprite sprite(renderTexture.getTexture());
+    postProcessShader.setUniform("texture", sf::Shader::CurrentTexture);
+    window.draw(sprite, &postProcessShader);
+
   }
 
   void renderGameOver(std::shared_ptr<Game> game) {
@@ -516,52 +614,6 @@ private:
     playersText.setPosition(10, 40);
     playersText.setFillColor(sf::Color::White);
     window.draw(playersText);
-  }
-
-public:
-  GameRenderer()
-      : window(sf::VideoMode(GAME_WIDTH, GAME_HEIGHT + GAME_BANNER_HEIGHT),
-               "Game Server") {
-    window.setFramerateLimit(60);
-    if (!loadFont()) {
-      std::cerr
-          << "Warning: No font loaded. Text rendering may not work correctly."
-          << std::endl;
-    }
-  }
-
-  void render(std::shared_ptr<Game> game) {
-    window.clear(sf::Color::White);
-    // // Draw grid
-    // sf::RectangleShape cell(sf::Vector2f(CELL_SIZE - 1, CELL_SIZE - 1));
-    // cell.setFillColor(sf::Color::Black);
-    // for (int y = 0; y < GRID_HEIGHT; ++y) {
-    //   for (int x = 0; x < GRID_WIDTH; ++x) {
-    // 	cell.setPosition(x * CELL_SIZE, y * CELL_SIZE);
-    // 	window.draw(cell);
-    //   }
-    // }
-    renderPlayers(game);
-    if (game->isGameOver()) {
-      renderGameOver(game);
-    }
-    renderBanner(game);
-    window.display();
-  }
-
-  bool isOpen() const { return window.isOpen(); }
-
-  void handleEvents() {
-    sf::Event event;
-    while (window.pollEvent(event)) {
-      if (event.type == sf::Event::Closed) {
-        window.close();
-      }
-      if (event.type == sf::Event::KeyPressed &&
-          event.key.code == sf::Keyboard::Escape) {
-        window.close();
-      }
-    }
   }
 };
 
