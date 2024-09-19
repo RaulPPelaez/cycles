@@ -1,6 +1,6 @@
-## Minimal example of a CMake-enabled C++ project
+## Cycles: A C++ multiplayer game 
 
-This is an example C++ project that includes tests using GTest and documentation using Doxygen+Sphinx+breathe. The project is built using CMake.
+This is a C++ project with documentation using Doxygen+Sphinx+breathe. The project is built using CMake.
 
 ### Prerequisites
 
@@ -26,14 +26,7 @@ cmake ..
 cmake --build .
 ```
 
-You can now run the tests:
-
-```bash
-ctest
-```
-It might be called ctest.exe in Windows.
-
-The documentation will also be generated in the `build/docs/sphinx/index.html` directory. Open the `index.html` file in a web browser to view it.
+The documentation will be generated in the `build/docs/sphinx/index.html` directory. Open the `index.html` file in a web browser to view it.
 
 
 ### Cleaning the project
