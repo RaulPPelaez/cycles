@@ -12,8 +12,10 @@ build:
   jobs:
      post_create_environment:
        - ln -s $(which pip | rev | cut -d/ -f3- | rev)/lib/libudev.so.1 $(which pip | rev | cut -d/ -f3- | rev)/lib/libudev.so.0
-       - cmake -DCMAKE_INSTALL_PREFIX=$(which pip | rev | cut -d/ -f3- | rev) . && make -j4 all
+
   commands:
+    - mkdir build
+    - cd build && cmake .. && make -j4 all
     - mv build/docs/sphinx/html $READTHEDOCS_OUTPUT/html
     
 conda:
