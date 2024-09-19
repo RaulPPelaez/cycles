@@ -1,4 +1,6 @@
 #include "api.h"
+#include <SFML/Network.hpp>
+#include <spdlog/spdlog.h>
 
 namespace cycles {
 
@@ -143,13 +145,5 @@ bool Connection::isActive() {
   return socket->getRemoteAddress() != sf::IpAddress::None;
 }
 
-bool isInsideGrid(sf::Vector2i position, int gridWidth, int gridHeight) {
-  return position.x >= 0 && position.x < gridWidth && position.y >= 0 &&
-         position.y < gridHeight;
-}
-
-bool isCellEmpty(sf::Vector2i position, const GameState &state) {
-  return state.getGridCell(position.x, position.y) == 0;
-}
 
 } // namespace cycles

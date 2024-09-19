@@ -1,10 +1,5 @@
 #include "api.h"
 #include "utils.h"
-#include <SFML/Graphics.hpp>
-#include <SFML/Network.hpp>
-#include <chrono>
-#include <cstdlib>
-#include <ctime>
 #include <iostream>
 #include <random>
 #include <spdlog/spdlog.h>
@@ -12,9 +7,7 @@
 
 using namespace cycles;
 
-
 class BotClient {
-private:
   Connection connection;
   std::string name;
   GameState state;
@@ -27,10 +20,10 @@ private:
     // Check that the move does not overlap with any grid cell that is set to
     // not 0
     auto new_pos = my_player.position + getDirectionVector(direction);
-    if (!isInsideGrid(new_pos, state.gridWidth, state.gridHeight)) {
+    if (!state.isInsideGrid(new_pos)) {
       return false;
     }
-    if (state.getGridCell(new_pos.x, new_pos.y) != 0) {
+    if (state.getGridCell(new_pos) != 0) {
       return false;
     }
     return true;
@@ -42,7 +35,8 @@ private:
     const auto position = my_player.position;
     const int frameNumber = state.frameNumber;
     float inertialDamping = 1.0;
-    auto dist = std::uniform_int_distribution<int>(0, 3 + static_cast<int>(inertia*inertialDamping));
+    auto dist = std::uniform_int_distribution<int>(
+        0, 3 + static_cast<int>(inertia * inertialDamping));
     Direction direction;
     do {
       if (attempts >= max_attempts) {
@@ -54,16 +48,17 @@ private:
       int proposal = dist(rng);
       if (proposal > 3) {
         proposal = previousDirection;
-        inertialDamping  = 0; // Remove inertia if the previous direction is not valid
+        inertialDamping =
+            0; // Remove inertia if the previous direction is not valid
       }
       direction = getDirectionFromValue(proposal);
       attempts++;
     } while (!is_valid_move(direction));
-    spdlog::debug(
-        "{}: Valid move found after {} attempts, moving from ({}, {}) to ({}, {}) in frame {}",
-        name, position.x, position.y, attempts,
-        position.x + getDirectionVector(direction).x,
-        position.y + getDirectionVector(direction).y, frameNumber);
+    spdlog::debug("{}: Valid move found after {} attempts, moving from ({}, "
+                  "{}) to ({}, {}) in frame {}",
+                  name, position.x, position.y, attempts,
+                  position.x + getDirectionVector(direction).x,
+                  position.y + getDirectionVector(direction).y, frameNumber);
     return direction;
   }
 
@@ -104,7 +99,6 @@ public:
     }
   }
 
-private:
 };
 
 int main(int argc, char *argv[]) {
