@@ -14,9 +14,10 @@ build:
     - mamba env create --file environment.yml
     - ln -s $(mamba run -n cycles which pip | rev | cut -d/ -f3- | rev)/lib/libudev.so.1 $(mamba run -n cycles which pip | rev | cut -d/ -f3- | rev)/lib/libudev.so.0
     - cd build && mamba run -n cycles cmake .. && mamba run -n cycles make -j4 all
-    - ls
-    - tree
-    - mv docs/sphinx $READTHEDOCS_OUTPUT/html
+    - ls build
+    - ls build/docs
+    - find . -name index.html
+    - mv build/docs/sphinx $READTHEDOCS_OUTPUT/html
     
 conda:
   environment: environment.yml
