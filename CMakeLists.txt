@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Cycles VERSION 1.0)
+project(Cycles++ VERSION 1.0)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)

@@ -1,7 +1,7 @@
-Cycles documentation
+Cycles++ documentation
 ===================================
 
-Cycles is a multiplayer implementation of the Light Cycles game from Tron. In this implementation bots play against other bots.
+Cycles++ is a multiplayer implementation of the Light Cycles game from Tron. In this implementation bots play against other bots.
 
 The game is played on a grid, where each player controls a cycle that leaves a trail behind it. The goal is to make the other players crash into the walls or the trails left by the other cycles.
 

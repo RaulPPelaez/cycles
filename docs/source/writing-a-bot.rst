@@ -1,4 +1,5 @@
 .. _writing_a_bot:
+
 Writing a bot
 -------------
 

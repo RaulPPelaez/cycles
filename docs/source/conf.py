@@ -6,7 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "Cycles"
+project = "Cycles++"
 copyright = "2024, Raul"
 author = "Raul"
 
