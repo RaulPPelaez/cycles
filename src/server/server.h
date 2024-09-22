@@ -25,7 +25,7 @@ struct Configuration {
   int gameWidth = 1000;
   int gameHeight = 1000;
   int gameBannerHeight = 100;
-  int cellSize = 10;
+  float cellSize = 10;
 
   Configuration(std::string configPath);
 };

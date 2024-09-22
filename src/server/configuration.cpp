@@ -42,7 +42,7 @@ namespace cycles_server{
                      it.first.as<std::string>());
       }
     }
-    cellSize = gameWidth / gridWidth;
+    cellSize = gameWidth / float(gridWidth);
   }
 
 
