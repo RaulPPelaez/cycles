@@ -5,12 +5,23 @@
 
 namespace cycles_server{
 // Rendering Logic
+class PostProcess{
+  sf::Shader postProcessShader;
+  sf::Shader bloomShader;
+  sf::RenderTexture renderTexture;
+  sf::RenderTexture channel1;
+public:
+  PostProcess(){}
+  void create(sf::Vector2i windowSize);
+  void apply(sf::RenderWindow &window, sf::RenderTexture &target);
+};
+
 class GameRenderer {
   sf::RenderWindow window;
   sf::Font font;
-  sf::Shader postProcessShader;
   sf::RenderTexture renderTexture;
   const Configuration conf;
+  PostProcess postProcess;
 
 public:
   GameRenderer(Configuration conf);

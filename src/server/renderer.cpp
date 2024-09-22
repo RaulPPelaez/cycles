@@ -1,5 +1,6 @@
 #include "renderer.h"
 #include <SFML/Graphics.hpp>
+#include <filesystem>
 #include <map>
 #include <memory>
 #include <spdlog/spdlog.h>
@@ -26,42 +27,53 @@ sf::Font loadFont() {
   spdlog::error("Failed to load font");
   throw std::runtime_error("Failed to load font");
 }
-std::string bloomShader = R"(
-uniform sampler2D texture;
-uniform float blur_radius = 1.0;
-
-
-void main() {
-    vec2 textureCoordinates = gl_TexCoord[0].xy;
-    vec4 color = vec4(0.0);
-    color += texture2D(texture, textureCoordinates - 10.0 * blur_radius) * 0.0012;
-    color += texture2D(texture, textureCoordinates - 9.0 * blur_radius) * 0.0015;
-    color += texture2D(texture, textureCoordinates - 8.0 * blur_radius) * 0.0038;
-    color += texture2D(texture, textureCoordinates - 7.0 * blur_radius) * 0.0087;
-    color += texture2D(texture, textureCoordinates - 6.0 * blur_radius) * 0.0180;
-    color += texture2D(texture, textureCoordinates - 5.0 * blur_radius) * 0.0332;
-    color += texture2D(texture, textureCoordinates - 4.0 * blur_radius) * 0.0547;
-    color += texture2D(texture, textureCoordinates - 3.0 * blur_radius) * 0.0807;
-    color += texture2D(texture, textureCoordinates - 2.0 * blur_radius) * 0.1065;
-    color += texture2D(texture, textureCoordinates - blur_radius) * 0.1258;
-    color += texture2D(texture, textureCoordinates) * 0.1330;
-    color += texture2D(texture, textureCoordinates + blur_radius) * 0.1258;
-    color += texture2D(texture, textureCoordinates + 2.0 * blur_radius) * 0.1065;
-    color += texture2D(texture, textureCoordinates + 3.0 * blur_radius) * 0.0807;
-    color += texture2D(texture, textureCoordinates + 4.0 * blur_radius) * 0.0547;
-    color += texture2D(texture, textureCoordinates + 5.0 * blur_radius) * 0.0332;
-    color += texture2D(texture, textureCoordinates + 6.0 * blur_radius) * 0.0180;
-    color += texture2D(texture, textureCoordinates - 7.0 * blur_radius) * 0.0087;
-    color += texture2D(texture, textureCoordinates - 8.0 * blur_radius) * 0.0038;
-    color += texture2D(texture, textureCoordinates - 9.0 * blur_radius) * 0.0015;
-    color += texture2D(texture, textureCoordinates - 10.0 * blur_radius) * 0.0012;
-    gl_FragColor = color*0;
-}
-
-)";
 } // namespace detail
 
 using namespace cycles_server;
+
+void PostProcess::create(sf::Vector2i windowSize) {
+  auto this_source =
+      std::filesystem::path(__FILE__).parent_path().string() + "/";
+  postProcessShader.loadFromFile(this_source + "shaders/postprocess.frag",
+                                 sf::Shader::Fragment);
+  bloomShader.loadFromFile(this_source + "shaders/bloom.frag",
+                           sf::Shader::Fragment);
+  renderTexture.create(windowSize.x, windowSize.y);
+  renderTexture.setSmooth(true);
+  channel1.create(windowSize.x, windowSize.y);
+  channel1.setSmooth(true);
+  if (!postProcessShader.isAvailable()) {
+    spdlog::critical("Shader not available");
+    exit(1);
+  }
+  if (!bloomShader.isAvailable()) {
+    spdlog::critical("Bloom shader not available");
+    exit(1);
+  }
+}
+
+void PostProcess::apply(sf::RenderWindow &window, sf::RenderTexture &channel0) {
+  auto windowSize = sf::Glsl::Vec2(window.getSize().x, window.getSize().y);
+  postProcessShader.setUniform("iResolution", windowSize);
+  bloomShader.setUniform("iResolution", windowSize);
+  renderTexture.clear(sf::Color::Black);
+  channel1.clear(sf::Color::Black);
+  sf::RectangleShape bkg(windowSize);
+  bkg.setFillColor(sf::Color::Black);
+  renderTexture.draw(bkg);
+  channel1.draw(bkg);
+  channel0.generateMipmap();
+  postProcessShader.setUniform("iChannel0", channel0.getTexture());
+  sf::Sprite sprite(channel0.getTexture());
+  channel1.draw(sprite, &postProcessShader);
+  channel1.display();
+  channel1.generateMipmap();
+  bloomShader.setUniform("iChannel0", channel0.getTexture());
+  bloomShader.setUniform("iChannel1", channel1.getTexture());
+  sf::Sprite sprite2(renderTexture.getTexture());
+  window.draw(sprite2, &bloomShader);
+}
+
 // Rendering Logic
 GameRenderer::GameRenderer(Configuration conf)
     : conf(conf), window(sf::VideoMode(conf.gameWidth,
@@ -73,8 +85,8 @@ GameRenderer::GameRenderer(Configuration conf)
   } catch (const std::runtime_error &e) {
     spdlog::warn("No font loaded. Text rendering may not work correctly.");
   }
-  postProcessShader.loadFromMemory(detail::bloomShader, sf::Shader::Fragment);
   renderTexture.create(window.getSize().x, window.getSize().y);
+  postProcess.create(sf::Vector2i(window.getSize().x, window.getSize().y));
 }
 
 void GameRenderer::render(std::shared_ptr<Game> game) {
@@ -110,11 +122,17 @@ void GameRenderer::handleEvents() {
 }
 
 void GameRenderer::renderPlayers(std::shared_ptr<Game> game) {
-  const int offset = conf.gameBannerHeight;
-  postProcessShader.setUniform("blur_radius", 10.0f);
-  renderTexture.clear(sf::Color::White);
+  const int offset_y = conf.gameBannerHeight + 0;
+  const int offset_x = 0;
+  auto cellSize = conf.cellSize;
+  auto windowSize = sf::Glsl::Vec2(window.getSize().x, window.getSize().y);
+  renderTexture.clear(sf::Color::Black);
+  sf::RectangleShape bkg(windowSize);
+  bkg.setFillColor(sf::Color::Black);
+  renderTexture.draw(bkg);
+
   for (const auto &[id, player] : game->getPlayers()) {
-    sf::CircleShape playerShape(conf.cellSize);
+    sf::CircleShape playerShape(cellSize);
     // Make the head of the player darker
     auto darkerColor = player.color;
     darkerColor.r = darkerColor.r * 0.8;
@@ -122,61 +140,55 @@ void GameRenderer::renderPlayers(std::shared_ptr<Game> game) {
     darkerColor.b = darkerColor.b * 0.8;
     playerShape.setFillColor(darkerColor);
     playerShape.setPosition(
-        (player.position.x) * conf.cellSize - conf.cellSize / 2,
-        (player.position.y) * conf.cellSize - conf.cellSize / 2 + offset);
+        (player.position.x) * cellSize - cellSize / 2 + offset_x,
+        (player.position.y) * cellSize - cellSize / 2 + offset_y);
     renderTexture.draw(playerShape);
     // Add a border to the head
-    sf::CircleShape borderShape(conf.cellSize + 1);
+    sf::CircleShape borderShape(cellSize + 1);
     borderShape.setFillColor(sf::Color::Transparent);
-    borderShape.setOutlineThickness(2);
+    borderShape.setOutlineThickness(3);
     borderShape.setOutlineColor(player.color);
     borderShape.setPosition(
-        (player.position.x) * conf.cellSize - conf.cellSize / 2 - 1,
-        (player.position.y) * conf.cellSize - conf.cellSize / 2 - 1 + offset);
+        (player.position.x) * cellSize - cellSize / 2 - 1 + offset_x,
+        (player.position.y) * cellSize - cellSize / 2 - 1 + offset_y);
     renderTexture.draw(borderShape);
     // Draw tail
     for (auto tail : player.tail) {
-      sf::RectangleShape tailShape(sf::Vector2f(conf.cellSize, conf.cellSize));
+      sf::RectangleShape tailShape(sf::Vector2f(cellSize, cellSize));
       tailShape.setFillColor(player.color);
-      tailShape.setPosition(tail.x * conf.cellSize,
-                            tail.y * conf.cellSize + offset);
+      tailShape.setPosition(tail.x * cellSize + offset_x,
+                            tail.y * cellSize + offset_y);
       renderTexture.draw(tailShape);
-      // Add a border to the tail
-      sf::RectangleShape borderShape(
-          sf::Vector2f(conf.cellSize + 2, conf.cellSize + 2));
-      borderShape.setFillColor(sf::Color::Transparent);
-      borderShape.setOutlineThickness(2);
-      borderShape.setOutlineColor(player.color);
-      borderShape.setPosition(tail.x * conf.cellSize - 1,
-                              tail.y * conf.cellSize - 1 + offset);
-      renderTexture.draw(borderShape);
     }
   }
   renderTexture.display();
-  sf::Sprite sprite(renderTexture.getTexture());
-  postProcessShader.setUniform("texture", sf::Shader::CurrentTexture);
-  window.draw(sprite, &postProcessShader);
-
+  postProcess.apply(window, renderTexture);
   for (const auto &[id, player] : game->getPlayers()) {
-    sf::Text nameText(player.name, font, 22);
-    nameText.setFillColor(sf::Color::Black);
-    nameText.setPosition(player.position.x * conf.cellSize,
-                         player.position.y * conf.cellSize - 20 + offset);
+    sf::Text nameText(player.name, font, 30);
+    nameText.setFillColor(sf::Color::White);
+    nameText.setOutlineThickness(2);
+    nameText.setOutlineColor(sf::Color::Black);
+    nameText.setPosition(player.position.x * cellSize - 20 + offset_x,
+                         player.position.y * cellSize - 20 + offset_y);
     window.draw(nameText);
   }
 }
 
 void GameRenderer::renderGameOver(std::shared_ptr<Game> game) {
   sf::Text gameOverText("Game Over", font, 60);
+  gameOverText.setOutlineThickness(3);
+  gameOverText.setOutlineColor(sf::Color::White);
   gameOverText.setFillColor(sf::Color::Black);
   gameOverText.setPosition(conf.gameWidth / 2 - 150,
-                           conf.gameHeight / 2 - 30 + conf.gameBannerHeight);
+                           conf.gameHeight / 2 - 30);
   if (game->getPlayers().size() > 0) {
     auto winner = game->getPlayers().begin()->second.name;
     sf::Text winnerText("Winner: " + winner, font, 40);
     winnerText.setFillColor(sf::Color::Black);
+    winnerText.setOutlineThickness(3);
+    winnerText.setOutlineColor(sf::Color::White);
     winnerText.setPosition(conf.gameWidth / 2 - 150,
-                           conf.gameHeight / 2 + 30 + conf.gameBannerHeight);
+                           conf.gameHeight / 2 + 30);
     window.draw(winnerText);
   }
   window.draw(gameOverText);
