@@ -53,7 +53,7 @@ public:
 
 private:
   int frame = 0;
-  const int max_client_communication_time = 100; // ms
+  const int max_client_communication_time = 30; // ms
 
   bool acceptingClients = true;
 
@@ -167,11 +167,11 @@ private:
 
   void gameLoop() {
     sf::sleep(sf::milliseconds(2000)); // Wait for clients to connect
-    //acceptingClients = false;
+    acceptingClients = false;
     sf::Clock clock;
     sf::Clock clientCommunicationClock;
     while (running && !game->isGameOver()) {
-      if (clock.getElapsedTime().asMilliseconds() >= 100) { // ~10 FPS
+      if (clock.getElapsedTime().asMilliseconds() >= 3) { // ~30 fps
         clock.restart();
         std::scoped_lock lock(serverMutex);
         game->setFrame(frame);
@@ -196,7 +196,7 @@ private:
                         clientsUnsent.size());
           spdlog::debug("Server ({}): Clients to recieve: {}", frame,
                         toRecieve.size());
-          // Increase trials for clients that have not sent input this frame
+          // Check for clients that have not sent input for a long time
           if (clientCommunicationClock.getElapsedTime().asMilliseconds() >
               max_client_communication_time) {
             // Mark all remaining clients for removal
