@@ -92,7 +92,7 @@ private:
   void checkPlayers() {
     // Remove sockets from players that have died or disconnected
     spdlog::debug("Server ({}): Checking players", frame);
-    const auto &players = game->getPlayers();
+    auto players = game->getPlayers();
     for (const auto &[id, socket] : clientSockets) {
       bool remove = false;
       if (players.find(id) == players.end()) {
@@ -143,7 +143,7 @@ private:
     sf::Packet packet;
     packet << conf.gridWidth << conf.gridHeight;
     const auto &grid = game->getGrid();
-    const auto &players = game->getPlayers();
+    auto players = game->getPlayers();
     packet << static_cast<sf::Uint32>(players.size());
     for (const auto &[id, player] : players) {
       packet << player.position.x << player.position.y << player.color.r
