@@ -17,7 +17,4 @@ target_link_libraries(configuration PUBLIC yaml-cpp::yaml-cpp)
 
 add_executable(server server.cpp)
 target_link_libraries(server PUBLIC game_logic configuration renderer)
-set(SHADER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shaders)
-add_custom_command(TARGET server POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy_directory
-		${SHADER_DIR} $<TARGET_FILE_DIR:server>/shaders)
+target_link_libraries(renderer PRIVATE resources::rc)

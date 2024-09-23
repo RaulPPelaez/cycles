@@ -1,47 +1,24 @@
 #include "renderer.h"
+#include "resources.h"
 #include <SFML/Graphics.hpp>
-#include <filesystem>
 #include <map>
 #include <memory>
 #include <spdlog/spdlog.h>
 #include <vector>
 
-namespace detail {
-sf::Font loadFont() {
-  sf::Font font;
-  const std::vector<std::string> fontPaths = {
-      "/usr/share/fonts/liberation/LiberationSans-Regular.ttf",
-      "/usr/share/fonts/liberation-sans/LiberationSans-Regular.ttf",
-      "/usr/share/fonts/ttf/dejavu/DejaVuSans.ttf",
-      "/usr/share/fonts/dejavu/DejaVuSans.ttf",
-      "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
-      "/usr/share/fonts/TTF/liberation-sans/LiberationSans-Regular.ttf"};
-
-  for (const auto &path : fontPaths) {
-    if (font.loadFromFile(path)) {
-      spdlog::info("Font loaded from {}", path);
-      return font;
-    }
-  }
-
-  spdlog::error("Failed to load font");
-  throw std::runtime_error("Failed to load font");
-}
-} // namespace detail
-
 using namespace cycles_server;
 
 void PostProcess::create(sf::Vector2i windowSize) {
-  auto this_source =
-      std::filesystem::path(__FILE__).parent_path().string() + "/";
-  postProcessShader.loadFromFile(this_source + "shaders/postprocess.frag",
-                                 sf::Shader::Fragment);
-  bloomShader.loadFromFile(this_source + "shaders/bloom.frag",
-                           sf::Shader::Fragment);
-  renderTexture.create(windowSize.x, windowSize.y);
-  renderTexture.setSmooth(true);
-  channel1.create(windowSize.x, windowSize.y);
-  channel1.setSmooth(true);
+  auto postProcessShaderSource =
+      cycles_resources::getResourceFile("resources/shaders/postprocess.frag");
+  postProcessShader.loadFromMemory(std::string(postProcessShaderSource.begin(),
+                                               postProcessShaderSource.end()),
+                                   sf::Shader::Fragment);
+  auto bloomShaderSource =
+      cycles_resources::getResourceFile("resources/shaders/bloom.frag");
+  bloomShader.loadFromMemory(
+      std::string(bloomShaderSource.begin(), bloomShaderSource.end()),
+      sf::Shader::Fragment);
   if (!postProcessShader.isAvailable()) {
     spdlog::critical("Shader not available");
     exit(1);
