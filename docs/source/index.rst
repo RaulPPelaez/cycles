@@ -23,6 +23,16 @@ The server and clients are written in C++ and require a C++20 compiler. All depe
     conda env create -f environment.yml
     conda activate cycles
 
+.. warning::
+
+   There is a bug in the latest SFML package for linux. Fixing it requires to manually create a missing symlink to libudev:
+
+   .. code-block:: bash
+
+       ln -s $CONDA_PREFIX/lib/libudev.so.1 $CONDA_PREFIX/lib/libudev.so.0
+
+   You might also have to install the libudev package from conda.
+   
 To build the server and the example client, clone the repository and run the following commands from the root directory of the repository:
 
 .. code-block:: bash
@@ -87,7 +97,7 @@ The following script will start the server and some clients:
 		./build/bin/server &
 		sleep 1
 
-		for i in {1..60}
+		for i in {1..30}
 		do
 		./build/bin/client randomio$i &
 		done
