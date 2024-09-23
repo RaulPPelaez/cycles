@@ -2,6 +2,8 @@
 #include"server.h"
 #include "game_logic.h"
 #include <SFML/Graphics.hpp>
+#include <functional>
+
 
 namespace cycles_server{
 // Rendering Logic
@@ -30,7 +32,9 @@ public:
 
   bool isOpen() const { return window.isOpen(); }
 
-  void handleEvents();
+  void handleEvents(std::vector<std::function<void(sf::Event &)>> extraEventHandlers = {});
+
+  void renderSplashScreen(std::shared_ptr<Game> game);
 
 private:
   void renderPlayers(std::shared_ptr<Game> game);

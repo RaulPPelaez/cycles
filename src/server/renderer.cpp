@@ -27,6 +27,10 @@ void PostProcess::create(sf::Vector2i windowSize) {
     spdlog::critical("Bloom shader not available");
     exit(1);
   }
+  renderTexture.create(windowSize.x, windowSize.y);
+  renderTexture.setSmooth(true);
+  channel1.create(windowSize.x, windowSize.y);
+  channel1.setSmooth(true);
 }
 
 void PostProcess::apply(sf::RenderWindow &window, sf::RenderTexture &channel0) {
@@ -39,26 +43,23 @@ void PostProcess::apply(sf::RenderWindow &window, sf::RenderTexture &channel0) {
   bkg.setFillColor(sf::Color::Black);
   renderTexture.draw(bkg);
   channel1.draw(bkg);
-  channel0.generateMipmap();
   postProcessShader.setUniform("iChannel0", channel0.getTexture());
-  sf::Sprite sprite(channel0.getTexture());
-  channel1.draw(sprite, &postProcessShader);
+  channel1.draw(sf::Sprite(channel0.getTexture()), &postProcessShader);
   channel1.display();
-  channel1.generateMipmap();
   bloomShader.setUniform("iChannel0", channel0.getTexture());
   bloomShader.setUniform("iChannel1", channel1.getTexture());
-  sf::Sprite sprite2(renderTexture.getTexture());
-  window.draw(sprite2, &bloomShader);
+  window.draw(sf::Sprite(renderTexture.getTexture()), &bloomShader);
 }
 
 // Rendering Logic
 GameRenderer::GameRenderer(Configuration conf)
     : conf(conf), window(sf::VideoMode(conf.gameWidth,
                                        conf.gameHeight + conf.gameBannerHeight),
-                         "Game Server") {
+                         "Cycles++") {
   window.setFramerateLimit(60);
   try {
-    font = detail::loadFont();
+    auto fs = cycles_resources::getResourceFile("resources/SAIBA-45.ttf");
+    font.loadFromMemory(fs.begin(), fs.size());
   } catch (const std::runtime_error &e) {
     spdlog::warn("No font loaded. Text rendering may not work correctly.");
   }
@@ -67,7 +68,7 @@ GameRenderer::GameRenderer(Configuration conf)
 }
 
 void GameRenderer::render(std::shared_ptr<Game> game) {
-  window.clear(sf::Color::White);
+  window.clear(sf::Color::Black);
   // // Draw grid
   // sf::RectangleShape cell(sf::Vector2f(conf.cellSize - 1, conf.cellSize -
   // 1)); cell.setFillColor(sf::Color::Black); for (int y = 0; y <
@@ -85,7 +86,8 @@ void GameRenderer::render(std::shared_ptr<Game> game) {
   window.display();
 }
 
-void GameRenderer::handleEvents() {
+void GameRenderer::handleEvents(
+    std::vector<std::function<void(sf::Event &)>> extraEventsHandlers) {
   sf::Event event;
   while (window.pollEvent(event)) {
     if (event.type == sf::Event::Closed) {
@@ -94,6 +96,9 @@ void GameRenderer::handleEvents() {
     if (event.type == sf::Event::KeyPressed &&
         event.key.code == sf::Keyboard::Escape) {
       window.close();
+    }
+    for (auto &extraEvent : extraEventsHandlers) {
+      extraEvent(event);
     }
   }
 }
@@ -156,16 +161,14 @@ void GameRenderer::renderGameOver(std::shared_ptr<Game> game) {
   gameOverText.setOutlineThickness(3);
   gameOverText.setOutlineColor(sf::Color::White);
   gameOverText.setFillColor(sf::Color::Black);
-  gameOverText.setPosition(conf.gameWidth / 2 - 150,
-                           conf.gameHeight / 2 - 30);
+  gameOverText.setPosition(conf.gameWidth / 2 - 150, conf.gameHeight / 2 - 30);
   if (game->getPlayers().size() > 0) {
     auto winner = game->getPlayers().begin()->second.name;
     sf::Text winnerText("Winner: " + winner, font, 40);
     winnerText.setFillColor(sf::Color::Black);
     winnerText.setOutlineThickness(3);
     winnerText.setOutlineColor(sf::Color::White);
-    winnerText.setPosition(conf.gameWidth / 2 - 150,
-                           conf.gameHeight / 2 + 30);
+    winnerText.setPosition(conf.gameWidth / 2 - 150, conf.gameHeight / 2 + 30);
     window.draw(winnerText);
   }
   window.draw(gameOverText);
@@ -189,4 +192,17 @@ void GameRenderer::renderBanner(std::shared_ptr<Game> game) {
   playersText.setPosition(10, 40);
   playersText.setFillColor(sf::Color::White);
   window.draw(playersText);
+}
+
+void GameRenderer::renderSplashScreen(std::shared_ptr<Game> game) {
+  window.clear(sf::Color::Black);
+  renderPlayers(game);
+  renderBanner(game);
+  sf::Text splashText("Waiting for players\npress SPACE to start", font, 30);
+  splashText.setFillColor(sf::Color::Black);
+  splashText.setOutlineThickness(2);
+  splashText.setOutlineColor(sf::Color::White);
+  splashText.setPosition(conf.gameWidth / 2 - 150, conf.gameHeight / 2 - 30);
+  window.draw(splashText);
+  window.display();
 }
