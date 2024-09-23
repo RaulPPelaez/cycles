@@ -41,25 +41,18 @@ public:
 
   void run() {
     running = true;
-    std::thread acceptThread(&GameServer::acceptClients, this);
     std::thread gameLoopThread(&GameServer::gameLoop, this);
-    acceptThread.join();
     gameLoopThread.join();
   }
 
   void stop() { running = false; }
 
-  int getFrame() { return frame; }
+  int getFrame() const { return frame; }
 
-private:
-  int frame = 0;
-  const int max_client_communication_time = 30; // ms
-
-  bool acceptingClients = true;
+  void setAcceptingClients(bool accepting) { acceptingClients = accepting; }
 
   void acceptClients() {
-    while (running && acceptingClients &&
-           clientSockets.size() < conf.maxClients) {
+    while (acceptingClients && clientSockets.size() < conf.maxClients) {
       auto clientSocket = std::make_shared<sf::TcpSocket>();
       if (listener.accept(*clientSocket) == sf::Socket::Done) {
         clientSocket->setBlocking(
@@ -77,7 +70,6 @@ private:
           if (clientSocket->send(colorPacket) != sf::Socket::Done) {
             spdlog::critical("Failed to send color to client: {}", playerName);
           } else {
-            // std::cout << "Color sent to client: " << playerName << std::endl;
             spdlog::info("Color sent to client: {}", playerName);
           }
           clientSocket->setBlocking(
@@ -88,6 +80,12 @@ private:
       }
     }
   }
+
+private:
+  int frame = 0;
+  const int max_client_communication_time = 50; // ms
+
+  bool acceptingClients = true;
 
   void checkPlayers() {
     // Remove sockets from players that have died or disconnected
@@ -166,12 +164,10 @@ private:
   }
 
   void gameLoop() {
-    sf::sleep(sf::milliseconds(2000)); // Wait for clients to connect
-    acceptingClients = false;
     sf::Clock clock;
     sf::Clock clientCommunicationClock;
     while (running && !game->isGameOver()) {
-      if (clock.getElapsedTime().asMilliseconds() >= 3) { // ~30 fps
+      if (clock.getElapsedTime().asMilliseconds() >= 33) { // ~30 fps
         clock.restart();
         std::scoped_lock lock(serverMutex);
         game->setFrame(frame);
@@ -234,6 +230,21 @@ int main(int argc, char *argv[]) {
   auto game = std::make_shared<Game>(conf);
   GameServer server(game, conf);
   GameRenderer renderer(conf);
+  std::thread acceptThread(&GameServer::acceptClients, &server);
+  bool acceptingClients = true;
+  auto spaceEvent = [&acceptingClients](auto &event) {
+    if (event.type == sf::Event::KeyPressed &&
+        event.key.code == sf::Keyboard::Space) {
+      spdlog::info("Space pressed, stopping client acceptance");
+      acceptingClients = false;
+    }
+  };
+  while (acceptingClients && renderer.isOpen()) {
+    renderer.handleEvents({spaceEvent});
+    renderer.renderSplashScreen(game);
+  }
+  server.setAcceptingClients(false);
+  acceptThread.join();
   std::thread serverThread(&GameServer::run, &server);
   while (renderer.isOpen()) {
     renderer.handleEvents();
