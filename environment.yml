@@ -10,6 +10,7 @@ dependencies:
   - doxygen
   - spdlog==1.14.*
   - sfml==2.6.*
+  - libudev # [linux]
   - pip 
   - pip:
     - breathe==4.35.0
