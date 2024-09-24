@@ -29,9 +29,10 @@ The server and clients are written in C++ and require a C++20 compiler. All depe
 
    .. code-block:: bash
 
-       ln -s $CONDA_PREFIX/lib/libudev.so.1 $CONDA_PREFIX/lib/libudev.so.0
+      mamba install libudev
+      ln -s $CONDA_PREFIX/lib/libudev.so.1 $CONDA_PREFIX/lib/libudev.so.0
 
-   You might also have to install the libudev package from conda.
+   You might have to install the libudev package from conda.
    
 To build the server and the example client, clone the repository and run the following commands from the root directory of the repository:
 
