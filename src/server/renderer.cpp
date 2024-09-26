@@ -9,6 +9,10 @@
 using namespace cycles_server;
 
 void PostProcess::create(sf::Vector2i windowSize) {
+  if(!sf::Shader::isAvailable()){
+    spdlog::critical("Shaders are not available in this system. Please run again without post processing enabled.");
+    exit(1);
+  }
   auto postProcessShaderSource =
       cycles_resources::getResourceFile("resources/shaders/postprocess.frag");
   postProcessShader.loadFromMemory(std::string(postProcessShaderSource.begin(),
