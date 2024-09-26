@@ -1,4 +1,4 @@
-# version 140
+# version 400 core
 #define colorRange 24.0
 
 uniform sampler2D iChannel0;

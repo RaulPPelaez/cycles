@@ -1,4 +1,4 @@
-# version 130
+# version 400 core
 uniform sampler2D iChannel0;
 uniform vec2 iResolution;
 
