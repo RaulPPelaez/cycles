@@ -23,7 +23,7 @@ class GameRenderer {
   sf::Font font;
   sf::RenderTexture renderTexture;
   const Configuration conf;
-  PostProcess postProcess;
+  std::unique_ptr<PostProcess> postProcess;
 
 public:
   GameRenderer(Configuration conf);

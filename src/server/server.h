@@ -26,7 +26,7 @@ struct Configuration {
   int gameHeight = 1000;
   int gameBannerHeight = 100;
   float cellSize = 10;
-
+  bool enablePostProcessing = false;
   Configuration(std::string configPath);
 };
 } // namespace cycles_server

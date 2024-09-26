@@ -31,9 +31,14 @@ namespace cycles_server{
     if (config["gameBannerHeight"]) {
       gameBannerHeight = config["gameBannerHeight"].as<int>();
     }
+    if (config["enablePostProcessing"]) {
+      enablePostProcessing = config["enablePostProcessing"].as<bool>();
+    }
+
     std::set<std::string> knownParameters = {"maxClients", "gridWidth",
                                              "gridHeight", "gameWidth",
-                                             "gameHeight", "gameBannerHeight"};
+                                             "gameHeight", "gameBannerHeight",
+					     "enablePostProcessing"};
     // Warn if there are unknown parameters
     for (const auto &it : config) {
       if (knownParameters.find(it.first.as<std::string>()) ==

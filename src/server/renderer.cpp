@@ -64,7 +64,10 @@ GameRenderer::GameRenderer(Configuration conf)
     spdlog::warn("No font loaded. Text rendering may not work correctly.");
   }
   renderTexture.create(window.getSize().x, window.getSize().y);
-  postProcess.create(sf::Vector2i(window.getSize().x, window.getSize().y));
+  if(conf.enablePostProcessing){
+    postProcess = std::make_unique<PostProcess>();
+    postProcess->create(sf::Vector2i(window.getSize().x, window.getSize().y));
+  }
 }
 
 void GameRenderer::render(std::shared_ptr<Game> game) {
@@ -144,7 +147,10 @@ void GameRenderer::renderPlayers(std::shared_ptr<Game> game) {
     }
   }
   renderTexture.display();
-  postProcess.apply(window, renderTexture);
+  if(postProcess)
+    postProcess->apply(window, renderTexture);
+  else
+    window.draw(sf::Sprite(renderTexture.getTexture()));
   for (const auto &[id, player] : game->getPlayers()) {
     sf::Text nameText(player.name, font, 30);
     nameText.setFillColor(sf::Color::White);
