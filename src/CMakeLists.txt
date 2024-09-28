@@ -1,4 +1,4 @@
-set(FMT_UNICODE OFF)
+set(FMT_UNICODE OFF CACHE BOOL "Enable Unicode support" FORCE)
 find_package(spdlog REQUIRED)
 find_package(SFML 2.6 COMPONENTS graphics window system network REQUIRED)
 
