@@ -5,7 +5,7 @@ channels:
 dependencies:
   - python=3.11.*
   - cmake
-  - make
+  - ninja
   - clangxx
   - doxygen
   - spdlog==1.14.*
