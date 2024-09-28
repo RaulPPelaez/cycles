@@ -35,7 +35,7 @@ jobs:
       run: cat environment.yml
       
     - name: Install Mamba
-      uses: conda-incubator/setup-miniconda
+      uses: conda-incubator/setup-miniconda@v3
       with:
         environment-file: environment.yml
         cache-environment: false
