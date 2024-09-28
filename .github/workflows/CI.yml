@@ -1,25 +1,26 @@
 name: CI
-
 on:
   push:
     branches: [ master ]
   pull_request:
     branches: [ master ]
-
-defaults:
-  run:
-    shell: bash -l {0}
-
 jobs:
   build:
     name: ${{ matrix.name }}
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          # Latest supported versions
           - name: Linux
+            os: ubuntu-22.04
+          - name: macOS
+            os: macos-latest
+          - name: Windows
+            os: windows-latest
+    defaults:
+      run:
+        shell: bash -l {0}
     steps:
     - name: Check out
       uses: actions/checkout@v4
@@ -35,25 +36,25 @@ jobs:
         environment-file: environment.yml
         cache-environment: false
         cache-downloads: true
-
+    
     - name: List environment
       run: |
         micromamba activate cycles
         micromamba list
-
+    
     - name: Configure and compile the library
       run: |
         micromamba activate cycles
-        # Fix sfml bug
-        ln -s $CONDA_PREFIX/lib/libudev.so.1 $CONDA_PREFIX/lib/libudev.so.0
+        if [ "${{ runner.os }}" == "Linux" ]; then
+          # Fix sfml bug (Linux only)
+          ln -s $CONDA_PREFIX/lib/libudev.so.1 $CONDA_PREFIX/lib/libudev.so.0
+        fi
         mkdir build && cd build
-        cmake -DCMAKE_VERBOSE_MAKEFILE=yes -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX ..
-        make -j6 all
+        cmake -DCMAKE_VERBOSE_MAKEFILE=yes -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -G Ninja ..
+        cmake --build .
                 
     - name: Run tests
       run: |
         micromamba activate cycles
-        # Fix sfml bug
         cd build
-        ctest --output-on-failure 
-                
+        ctest --output-on-failure
