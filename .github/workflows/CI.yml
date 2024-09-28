@@ -26,7 +26,13 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        
+
+    - name: Tweak dependency file
+      # Run only in OSX and Win, remove libudev from the dependencies
+      if: ${{ runner.os }} != 'Linux'
+      run: |
+        sed -i '/libudev/d' environment.yml
+      
     - name: Show dependency file
       run: cat environment.yml
       
