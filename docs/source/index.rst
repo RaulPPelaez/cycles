@@ -25,7 +25,7 @@ The server and clients are written in C++ and require a C++20 compiler. All depe
 
 .. warning::
 
-   There is a bug in the latest SFML package for linux. Fixing it requires to manually create a missing symlink to libudev:
+   There is a bug in the latest SFML package for linux (WSL in Windows included). Fixing it requires to manually create a missing symlink to libudev:
 
    .. code-block:: bash
 
@@ -33,6 +33,15 @@ The server and clients are written in C++ and require a C++20 compiler. All depe
       ln -s $CONDA_PREFIX/lib/libudev.so.1 $CONDA_PREFIX/lib/libudev.so.0
 
    You might have to install the libudev package from conda.
+
+.. warning::
+
+   If you are on Windows and using the WSL you must install the graphical drivers:
+
+   .. code-block:: bash
+
+      sudo apt install mesa-common-dev
+   
    
 To build the server and the example client, clone the repository and run the following commands from the root directory of the repository:
 

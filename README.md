@@ -17,6 +17,8 @@ This will create a conda environment called `cycles` which you can activate with
 conda activate cycles
 ```
 
+Check the documentation for platform-specific details.
+
 ### Building the project
 
 To build the project, create a build directory and run CMake from there:
