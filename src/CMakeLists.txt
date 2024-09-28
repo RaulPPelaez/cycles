@@ -7,7 +7,7 @@ link_libraries(spdlog::spdlog)
 link_libraries(sfml-graphics sfml-window sfml-system sfml-network pthread)
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
-
+string(REPLACE "/utf-8" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 add_library(utils OBJECT utils.cpp)
 link_libraries(utils)
 add_library(api OBJECT api.cpp)
