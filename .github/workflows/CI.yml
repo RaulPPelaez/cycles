@@ -20,11 +20,14 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Tweak environment.yml
-      # Remove libudev in macos
+    - name: Tweak environment.yml in OSX
       if: runner.os == 'macos'
-      run: |
-        sed -i '' '/libudev/d' environment.yml
+      run: sed -i '' '/libudev/d' environment.yml
+    - name: Tweak environment.yml in Windows
+      if: runner.os == 'windows'
+      run: (Get-Content environment.yml) -notmatch "libudev" | Set-Content environment.yml
+
+      
     - name: Show dependency file
       run: cat environment.yml
       
