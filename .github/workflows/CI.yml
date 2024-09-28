@@ -23,9 +23,11 @@ jobs:
     - name: Tweak environment.yml in OSX
       if: runner.os == 'macos'
       run: sed -i '' '/libudev/d' environment.yml
+
     - name: Tweak environment.yml in Windows
       if: runner.os == 'windows'
-      run: (Get-Content environment.yml) -notmatch "libudev" | Set-Content environment.yml
+      shell: bash -el {0}
+      run: sed -i '/libudev/d' environment.yml
 
       
     - name: Show dependency file
