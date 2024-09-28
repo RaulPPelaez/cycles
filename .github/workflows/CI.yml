@@ -19,17 +19,6 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-
-    - name: Remove libudev from environment.yml
-      run: |
-        if [[ "$RUNNER_OS" == "macOS" ]]; then
-          sed -i '' '/libudev/d' environment.yml
-        elif [[ "$RUNNER_OS" == "Windows" ]]; then
-          powershell -Command "(Get-Content environment.yml) | Where-Object {`$_ -notmatch 'libudev'} | Set-Content environment.yml"
-        else
-          echo "Unsupported operating system"
-          exit 1
-        fi
         
     - name: Show dependency file
       run: cat environment.yml
