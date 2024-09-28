@@ -1,7 +1,7 @@
 # Fix a bug in fmt that prevents it from compiling in Windows
+file(WRITE "/utf-8" "")
 set(FMT_UNICODE OFF CACHE BOOL "Enable Unicode support" FORCE)
 find_package(spdlog REQUIRED)
-set(FMT_UNICODE OFF CACHE BOOL "Enable Unicode support" FORCE)
 find_package(SFML 2.6 COMPONENTS graphics window system network REQUIRED)
 
 link_libraries(spdlog::spdlog)
