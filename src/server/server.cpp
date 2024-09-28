@@ -52,7 +52,8 @@ public:
   void setAcceptingClients(bool accepting) { acceptingClients = accepting; }
 
   void acceptClients() {
-    while (acceptingClients && clientSockets.size() < conf.maxClients) {
+    while (acceptingClients &&
+           static_cast<int>(clientSockets.size()) < conf.maxClients) {
       auto clientSocket = std::make_shared<sf::TcpSocket>();
       if (listener.accept(*clientSocket) == sf::Socket::Done) {
         clientSocket->setBlocking(

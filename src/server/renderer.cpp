@@ -9,8 +9,9 @@
 using namespace cycles_server;
 
 void PostProcess::create(sf::Vector2i windowSize) {
-  if(!sf::Shader::isAvailable()){
-    spdlog::critical("Shaders are not available in this system. Please run again without post processing enabled.");
+  if (!sf::Shader::isAvailable()) {
+    spdlog::critical("Shaders are not available in this system. Please run "
+                     "again without post processing enabled.");
     exit(1);
   }
   auto postProcessShaderSource =
@@ -57,9 +58,10 @@ void PostProcess::apply(sf::RenderWindow &window, sf::RenderTexture &channel0) {
 
 // Rendering Logic
 GameRenderer::GameRenderer(Configuration conf)
-    : conf(conf), window(sf::VideoMode(conf.gameWidth,
-                                       conf.gameHeight + conf.gameBannerHeight),
-                         "Cycles++") {
+    : window(sf::VideoMode(conf.gameWidth,
+                           conf.gameHeight + conf.gameBannerHeight),
+             "Cycles++"),
+      conf(conf) {
   window.setFramerateLimit(60);
   try {
     auto fs = cycles_resources::getResourceFile("resources/SAIBA-45.ttf");
@@ -68,7 +70,7 @@ GameRenderer::GameRenderer(Configuration conf)
     spdlog::warn("No font loaded. Text rendering may not work correctly.");
   }
   renderTexture.create(window.getSize().x, window.getSize().y);
-  if(conf.enablePostProcessing){
+  if (conf.enablePostProcessing) {
     postProcess = std::make_unique<PostProcess>();
     postProcess->create(sf::Vector2i(window.getSize().x, window.getSize().y));
   }
@@ -151,7 +153,7 @@ void GameRenderer::renderPlayers(std::shared_ptr<Game> game) {
     }
   }
   renderTexture.display();
-  if(postProcess)
+  if (postProcess)
     postProcess->apply(window, renderTexture);
   else
     window.draw(sf::Sprite(renderTexture.getTexture()));
