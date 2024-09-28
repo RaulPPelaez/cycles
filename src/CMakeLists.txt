@@ -1,3 +1,4 @@
+set(FMT_UNICODE NO)
 find_package(spdlog REQUIRED)
 find_package(SFML 2.6 COMPONENTS graphics window system network REQUIRED)
 
