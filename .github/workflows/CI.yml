@@ -27,12 +27,17 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Tweak dependency file
-      # Run only in OSX and Win, remove libudev from the dependencies
-      if: ${{ runner.os }} != 'Linux'
+    - name: Remove libudev from environment.yml
       run: |
-        sed -i '/libudev/d' environment.yml
-      
+        if [[ "$RUNNER_OS" == "macOS" ]]; then
+          sed -i '' '/libudev/d' environment.yml
+        elif [[ "$RUNNER_OS" == "Windows" ]]; then
+          powershell -Command "(Get-Content environment.yml) | Where-Object {`$_ -notmatch 'libudev'} | Set-Content environment.yml"
+        else
+          echo "Unsupported operating system"
+          exit 1
+        fi
+        
     - name: Show dependency file
       run: cat environment.yml
       
