@@ -6,7 +6,7 @@ on:
     branches: [ master ]
 jobs:
   build:
-    name: ${{ matrix.name }}
+    name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
       matrix:
@@ -19,7 +19,12 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        
+
+    - name: Tweak environment.yml
+      # Remove libudev in macos
+      if: runner.os == 'macos'
+      run: |
+        sed -i '' '/libudev/d' environment.yml
     - name: Show dependency file
       run: cat environment.yml
       
