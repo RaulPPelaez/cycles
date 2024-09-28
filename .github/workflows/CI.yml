@@ -53,6 +53,10 @@ jobs:
           # Fix sfml bug (Linux only)
           ln -s $CONDA_PREFIX/lib/libudev.so.1 $CONDA_PREFIX/lib/libudev.so.0
         fi
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          # Fix fmt bug (Windows only), create an empty file called /utf-8 under src
+          touch src/\/utf-8
+        fi
         mkdir build && cd build
         cmake -DCMAKE_VERBOSE_MAKEFILE=yes -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -G Ninja ..
         cmake --build .
