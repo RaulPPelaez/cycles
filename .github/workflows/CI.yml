@@ -7,17 +7,10 @@ on:
 jobs:
   build:
     name: ${{ matrix.name }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}-latest
     strategy:
-      fail-fast: false
       matrix:
-        include:
-          - name: Linux
-            os: ubuntu-22.04
-          - name: macOS
-            os: macos-latest
-          - name: Windows
-            os: windows-latest
+        os: ["ubuntu", "macos", "windows"]
     defaults:
       run:
         shell: bash -l {0}
@@ -42,20 +35,21 @@ jobs:
       run: cat environment.yml
       
     - name: Install Mamba
-      uses: mamba-org/setup-micromamba@v1
+      uses: mamba-org/setup-micromamba@v3
       with:
         environment-file: environment.yml
         cache-environment: false
         cache-downloads: true
-    
+        activate-environment: cycles
+        auto-activate-base: false
+        miniforge-version: latest
+        
     - name: List environment
       run: |
-        micromamba activate cycles
-        micromamba list
+        conda list
     
     - name: Configure and compile the library
       run: |
-        micromamba activate cycles
         if [ "${{ runner.os }}" == "Linux" ]; then
           # Fix sfml bug (Linux only)
           ln -s $CONDA_PREFIX/lib/libudev.so.1 $CONDA_PREFIX/lib/libudev.so.0
@@ -66,6 +60,5 @@ jobs:
                 
     - name: Run tests
       run: |
-        micromamba activate cycles
         cd build
         ctest --output-on-failure
