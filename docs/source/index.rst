@@ -62,7 +62,12 @@ To start the server, run the following command:
 
 .. code-block:: bash
 
-    ./build/bin/cycles_server <config_file>
+    ./build/bin/server <config_file>
+
+.. sidebar::
+
+   .. hint:: Replace ./build/bin/server with the actual name of the server binary if needed.
+	     
 
 config_file is the path to a yaml file containing some server options. The following is an example of a config file:
 
